@@ -1,40 +1,27 @@
-CC:=gcc
-#CFLAGS:=-I./src -std=gnu99 -O2
-CFLAGS:=-I./src -std=gnu99 -Og -ggdb3 -Wall -Wextra
+CC = gcc
+CFLAGS = -std=gnu99
 
-#LEX:=lex
-#LEXFLAG:=-ll
-LEX:=flex
-LEXFLAG:=-lfl
+# Detect operating system and use correct library
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+    LEXLIB = -ll      # macOS uses libl
+else
+    LEXLIB = -lfl     # Linux uses libfl
+endif
 
-OBJDIR:=obj
-OBJS:=$(OBJDIR)/lex.yy.o $(OBJDIR)/driver.o
-BIN:=$(OBJDIR)/scanner
+scanner: lex.yy.o driver.o
+	$(CC) $(CFLAGS) -o scanner lex.yy.o driver.o $(LEXLIB)
 
-.PHONY: clean test $(OBJS) $(BIN)
+lex.yy.o: lex.yy.c
+	$(CC) $(CFLAGS) -c lex.yy.c
 
-$(BIN): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LEXFLAG)
+lex.yy.c: scanner.l
+	flex scanner.l    # PERSON 1: Use 'flex' explicitly
 
-$(OBJDIR)/lex.yy.o: $(OBJDIR)/lex.yy.c
-	$(CC) $(CFLAGS) -c $< -o $@
+driver.o: driver.c tokendef.h
+	$(CC) $(CFLAGS) -c driver.c
 
-$(OBJDIR)/lex.yy.c: src/scanner.l | $(OBJDIR)
-	$(LEX) -o $@ $<
-
-$(OBJDIR)/driver.o: src/driver.c
-	$(CC) $(CFLAGS) -c $< -o $@
+.PHONY: clean
 
 clean:
-	rm -rf $(OBJDIR)
-
-$(OBJDIR):
-	mkdir $@
-
-test: $(BIN) test/diffwin.py test/testOutput.py
-	python3 test/testOutput.py \
-		--testpath test/cases --testext .mC \
-		--exppath test/exp --expext .exp \
-		--program $<
-
-# vim: noexpandtab
+	rm -f scanner lex.yy.c lex.yy.o driver.o *~
