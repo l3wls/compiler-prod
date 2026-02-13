@@ -35,6 +35,7 @@ character       '.'
 string       //TODO
 
 
+// Michael will take this part on
  /* If the end quote is not found in the same line the string is unterminated */
 untermstring //TODO
 
@@ -53,30 +54,72 @@ yylineno = 1;
 
  /* Keywords */
  /* TODO: Support all keywords in mC */
+"if"      { updateCol(); return KWD_IF; }
+"else"    { updateCol(); return KWD_ELSE; }
+"while"   { updateCol(); return KWD_WHILE; }
+"int"     { updateCol(); return KWD_INT; }
+"string"  { updateCol(); return KWD_STRING; }
+"char"    { updateCol(); return KWD_CHAR; }
+"return"  { updateCol(); return KWD_RETURN; }
+"void"    { updateCol(); return KWD_VOID; }
 
  /* Operators */
  /* TODO: Support all operators in mC */
+/* Operators - Multi-character first */
+"++"      { updateCol(); return OPER_INC; }
+"--"      { updateCol(); return OPER_DEC; }
+"&&"      { updateCol(); return OPER_AND; }
+"||"      { updateCol(); return OPER_OR; }
+"<="      { updateCol(); return OPER_LTE; }
+">="      { updateCol(); return OPER_GTE; }
+"=="      { updateCol(); return OPER_EQ; }
+"!="      { updateCol(); return OPER_NEQ; }
+
+/* Operators - Single character */
+ "+"       { updateCol(); return OPER_ADD; }
+"-"       { updateCol(); return OPER_SUB; }
+"*"       { updateCol(); return OPER_MUL; }
+"/"       { updateCol(); return OPER_DIV; }
+"%"       { updateCol(); return OPER_MOD; }
+"<"       { updateCol(); return OPER_LT; }
+">"       { updateCol(); return OPER_GT; }
+"="       { updateCol(); return OPER_ASGN; }
+"!"       { updateCol(); return OPER_NOT; }
+"@"       { updateCol(); return OPER_AT; }
+
+/* Brackets and Parentheses */
+"["       { updateCol(); return LSQ_BRKT; }
+"]"       { updateCol(); return RSQ_BRKT; }
+"{"       { updateCol(); return LCRLY_BRKT; }
+"}"       { updateCol(); return RCRLY_BRKT; }
+"("       { updateCol(); return LPAREN; }
+")"       { updateCol(); return RPAREN; }
+
+/* Punctuation */
+","       { updateCol(); return COMMA; }
+";"       { updateCol(); return SEMICLN; }
 
  /* Identifiers */;
-{identifier}    //TODO
-{illidentifier} //TODO
+{identifier}    { updateCol(); return ID; }
+{illidentifier} { updateCol(); yyerror = "Illegal token"; return ERROR; }
 
  /* Constants */;
-{integer}       //TODO
-{integerlead0}  //TODO: "Integers may not have leading zeros"
-{character}     //TODO
+{integer}       { updateCol(); return INTCONST; }
+{integerlead0}  { updateCol(); yyerror = "Illegal token"; return ERROR; }
+{character}     { updateCol(); return CHARCONST; }
 {string}        {updateCol(); return processString();}
 {untermstring}  {updateCol(); yyerror = "Unterminated string"; return ERROR;}
 
+/* Michael will continue on this implementation */
  /* Comments */
 {comment}       //TODO
 {untermcomment} //TODO
 {multlncomment} //TODO
 
  /* Other */
-{newline}       //TODO
-{whitespace}    //TODO
-.               {return ILLEGAL_TOK;}
+{newline}       { scancol = 1; scanlineno++; }
+{whitespace}    { updateCol(); }
+.               { updateCol(); yyerror = "Illegal token"; return ERROR; }
 
 %%
 
@@ -86,12 +129,21 @@ yylineno = 1;
 Implement this function to keep track of column numbers
 */
 void updateCol(){
+    yycol = scancol;
+    yylineno = scanlineno;
+    scancol += yyleng;
 }
 
 /* TODO:
 Implement this function to keep track of line numbers
 */
 void countLines(){
+    int i;
+    for(i = 0; i < yyleng; i++){
+        if(yytext[i] == '\n'){
+            scanlineno++;
+        }
+    }
 }
 
 
@@ -102,5 +154,11 @@ and
 convert valid escape sequences into escaped characters
 (string[0] == '\\' and string[1] == 'n', then string[0] should be '\n')
 */
+
+/* Michael Will continue on this implementation */
 int processString(){
+    return STRCONST;
+}
+int yywrap(){
+    return 1;
 }
