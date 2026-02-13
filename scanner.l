@@ -1,4 +1,3 @@
-
 /* definitions */
 
 %{
@@ -14,11 +13,11 @@ int scanlineno = 1;
  /* char pointer to pass error messages to driver.c */
 char *yyerror;
 
- /* TODO: functions to update line and column numbers */
+ /* functions to update line and column numbers */
 void updateCol();
 void countLines();
 
- /* TODO: function to process a string literal */
+ /* function to process a string literal */
 int processString();
 
 %}
@@ -26,22 +25,8 @@ int processString();
 newline         \n
 whitespace      [ \t]+
 integer         [1-9][0-9]*|0
+integerlead0    0[0-9]+
 character       '.'
-
-// Michael will take this part on
- /* String can contain any characters between the double quotes */
- /* other than a newline or unescaped doublequotes */
-*/
-string       //TODO
-
-
-// Michael will take this part on
- /* If the end quote is not found in the same line the string is unterminated */
-untermstring //TODO
-
-comment         //TODO
-multlncomment   //TODO
-untermcomment   //TODO
 
 identifier      [a-zA-Z][a-zA-Z0-9]*
 illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
@@ -53,7 +38,6 @@ yylineno = 1;
  /* rules */
 
  /* Keywords */
- /* TODO: Support all keywords in mC */
 "if"      { updateCol(); return KWD_IF; }
 "else"    { updateCol(); return KWD_ELSE; }
 "while"   { updateCol(); return KWD_WHILE; }
@@ -63,9 +47,7 @@ yylineno = 1;
 "return"  { updateCol(); return KWD_RETURN; }
 "void"    { updateCol(); return KWD_VOID; }
 
- /* Operators */
- /* TODO: Support all operators in mC */
-/* Operators - Multi-character first */
+ /* Operators - Multi-character first */
 "++"      { updateCol(); return OPER_INC; }
 "--"      { updateCol(); return OPER_DEC; }
 "&&"      { updateCol(); return OPER_AND; }
@@ -75,8 +57,8 @@ yylineno = 1;
 "=="      { updateCol(); return OPER_EQ; }
 "!="      { updateCol(); return OPER_NEQ; }
 
-/* Operators - Single character */
- "+"       { updateCol(); return OPER_ADD; }
+ /* Operators - Single character */
+"+"       { updateCol(); return OPER_ADD; }
 "-"       { updateCol(); return OPER_SUB; }
 "*"       { updateCol(); return OPER_MUL; }
 "/"       { updateCol(); return OPER_DIV; }
@@ -87,7 +69,7 @@ yylineno = 1;
 "!"       { updateCol(); return OPER_NOT; }
 "@"       { updateCol(); return OPER_AT; }
 
-/* Brackets and Parentheses */
+ /* Brackets and Parentheses */
 "["       { updateCol(); return LSQ_BRKT; }
 "]"       { updateCol(); return RSQ_BRKT; }
 "{"       { updateCol(); return LCRLY_BRKT; }
@@ -95,26 +77,18 @@ yylineno = 1;
 "("       { updateCol(); return LPAREN; }
 ")"       { updateCol(); return RPAREN; }
 
-/* Punctuation */
+ /* Punctuation */
 ","       { updateCol(); return COMMA; }
 ";"       { updateCol(); return SEMICLN; }
 
- /* Identifiers */;
+ /* Identifiers */
 {identifier}    { updateCol(); return ID; }
 {illidentifier} { updateCol(); yyerror = "Illegal token"; return ERROR; }
 
- /* Constants */;
+ /* Constants */
 {integer}       { updateCol(); return INTCONST; }
 {integerlead0}  { updateCol(); yyerror = "Illegal token"; return ERROR; }
 {character}     { updateCol(); return CHARCONST; }
-{string}        {updateCol(); return processString();}
-{untermstring}  {updateCol(); yyerror = "Unterminated string"; return ERROR;}
-
-/* Michael will continue on this implementation */
- /* Comments */
-{comment}       //TODO
-{untermcomment} //TODO
-{multlncomment} //TODO
 
  /* Other */
 {newline}       { scancol = 1; scanlineno++; }
@@ -125,18 +99,12 @@ yylineno = 1;
 
 /* user routines */
 
-/* TODO:
-Implement this function to keep track of column numbers
-*/
 void updateCol(){
     yycol = scancol;
     yylineno = scanlineno;
     scancol += yyleng;
 }
 
-/* TODO:
-Implement this function to keep track of line numbers
-*/
 void countLines(){
     int i;
     for(i = 0; i < yyleng; i++){
@@ -146,19 +114,11 @@ void countLines(){
     }
 }
 
-
-/* TODO:
-Implement this function to
-check for illegal escape sequences in string literals
-and
-convert valid escape sequences into escaped characters
-(string[0] == '\\' and string[1] == 'n', then string[0] should be '\n')
-*/
-
-/* Michael Will continue on this implementation */
+/* Michael will implement this function */
 int processString(){
     return STRCONST;
 }
+
 int yywrap(){
     return 1;
 }
