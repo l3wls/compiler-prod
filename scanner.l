@@ -23,11 +23,12 @@ int processString();
 
 %}
 
-newline         //TODO
-whitespace      //TODO
-integer         //TODO
-character       //TODO
+newline         \n
+whitespace      [ \t]+
+integer         [1-9][0-9]*|0
+character       '.'
 
+// Michael will take this part on
  /* String can contain any characters between the double quotes */
  /* other than a newline or unescaped doublequotes */
 */
@@ -41,8 +42,8 @@ comment         //TODO
 multlncomment   //TODO
 untermcomment   //TODO
 
-identifier      //TODO
-illidentifier   //TODO: regular expression for an illegal identifier
+identifier      [a-zA-Z][a-zA-Z0-9]*
+illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
 
 yylineno = 1;
 
