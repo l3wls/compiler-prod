@@ -2,4 +2,3 @@ driver.o
 lex.yy.o
 lex.yy.c
 scanner
-coverage.mc

@@ -1,0 +1,52 @@
+/* ---------- Keywords (each must be its own token) ---------- */
+if else while int string char return void
+
+/* ---------- Identifiers vs keywords (keywords only when exact match) ---------- */
+intmain Intmain ifx else2 while0 stringy charlie returnValue voided A a Z z a9 Z0 abcABC123
+
+/* ---------- Integers (valid + leading-zero illegal) ---------- */
+0 7 42 999999
+01 007 0009
+
+/* ---------- Character constants (valid) ---------- */
+'a' 'Z' '0' '!' ' '
+
+/* ---------- Character constants (illegal tokens) ---------- */
+'' 'ab' '\n'
+' 
+/* (the line above is a single quote followed by newline on purpose) */
+
+/* ---------- Operators / special symbols (every one in spec) ---------- */
++ * / % < > <= >= == != = [ ] { } ( ) , ; @ ++ -- && || !
+
+/* ---------- Comments (no token should be produced) ---------- */
+/* This is a comment containing operators: + <= != && || @ "quotes" */
+/* Multi-line
+   comment should be ignored entirely
+*/
+
+/* ---------- Whitespace handling (tabs/spaces/newlines ignored) ---------- */
+int		int    int
+int
+
+/* ---------- Strings: valid escapes only (\n, \t, \", \\) ---------- */
+"simple"
+"tab:\t end"
+"newline:\n end"
+"quote: \" end"
+"backslash: \\ end"
+"combo: A\tB\nC\"D\\E end"
+
+/* ---------- String error: unrecognized escape (must report '\' position) ---------- */
+"bad escape: \b end"
+
+/* ---------- Policy A string recovery check:
+   After a bad escape, the rest of that string should not tokenize as IDs/operators. */
+"bad \q still_in_string ++ &&"  afterBadEscapeID
+
+/* ---------- String error: spans multiple lines (newline before closing quote) ---------- */
+"this string
+spans lines"
+
+/* ---------- Illegal token: random symbol not in spec ---------- */
+^
