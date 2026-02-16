@@ -202,6 +202,12 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
  /* Constants */
 {integer}       { updateCol(); return INTCONST; }
 {integerlead0}  { updateCol(); yyerror = "Illegal token"; return ERROR; }
+
+ /* Bad character constants (treat whole thing as one illegal token) */
+\'\'                { updateCol(); yyerror = "Illegal token"; return ERROR; }
+\'[^\'\n]{2,}\'     { updateCol(); yyerror = "Illegal token"; return ERROR; }
+\'\\[^\'\n]\'       { updateCol(); yyerror = "Illegal token"; return ERROR; }
+
 {character} {
     updateCol();  /* set token position to start of literal */
 
