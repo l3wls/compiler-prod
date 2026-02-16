@@ -1,6 +1,5 @@
 /* definitions */
 
-%option yytext_ptr
 %x COMMENT
 %x STR
 
@@ -32,7 +31,6 @@ static int  stridx;
 
 static char numbuf[32];
 
-
 %}
 
 newline         \n
@@ -48,15 +46,17 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
 
  /* rules */
 
- "/*" {
+ /* Comment Handling */
+
+"/*" {
     comment_start_line = scanlineno;
     comment_start_col  = scancol;
-    scancol += yyleng;      /* consume "/*" */
+    scancol += yyleng;
     BEGIN(COMMENT);
 }
 
 <COMMENT>"*/" {
-    scancol += yyleng;      /* consume "*/" */
+    scancol += yyleng;
     BEGIN(INITIAL);
 }
 
@@ -77,6 +77,70 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
     return ERROR;
 }
 
+ /* String Handling*/
+
+ \" {
+    string_start_line = scanlineno;
+    string_start_col  = scancol;
+    stridx = 0;
+    scancol += yyleng;      /* consume opening quote */
+    BEGIN(STR);
+}
+
+<STR>\" {
+    /* closing quote: produce STRCONST with decoded content */
+    strbuf[stridx] = '\0';
+    yytext = strbuf;
+
+    yylineno = string_start_line;
+    yycol    = string_start_col;
+
+    scancol += yyleng;      /* consume closing quote */
+    BEGIN(INITIAL);
+    return STRCONST;
+}
+
+<STR>\n {
+    yyerror  = "String spans multiple lines";
+    yylineno = scanlineno;
+    yycol    = scancol;
+    BEGIN(INITIAL);
+    return ERROR;
+}
+
+<STR>\\[nt\"\\] {
+    char e = yytext[1];
+    if (e == 'n')       strbuf[stridx++] = '\n';
+    else if (e == 't')  strbuf[stridx++] = '\t';
+    else if (e == '"')  strbuf[stridx++] = '"';
+    else                strbuf[stridx++] = '\\';
+
+    scancol += yyleng;
+}
+
+<STR>\\. {
+    yyerror  = "Unrecognized escape character in String";
+    yylineno = scanlineno;
+    yycol    = scancol;     /* points at '\' */
+    BEGIN(INITIAL);
+    return ERROR;
+}
+
+<STR>[^\\\"\n]+ {
+    int i;
+    for (i = 0; i < yyleng; i++) {
+        strbuf[stridx++] = yytext[i];
+    }
+    scancol += yyleng;
+}
+
+<STR><<EOF>> {
+    yyerror  = "Unterminated string constant";
+    yylineno = string_start_line;
+    yycol    = string_start_col;
+    BEGIN(INITIAL);
+    return ERROR;
+}
 
  /* Keywords */
 "if"      { updateCol(); return KWD_IF; }
@@ -129,10 +193,18 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
  /* Constants */
 {integer}       { updateCol(); return INTCONST; }
 {integerlead0}  { updateCol(); yyerror = "Illegal token"; return ERROR; }
-{character}     { updateCol(); return CHARCONST; }
+{character} {
+    updateCol();  /* set token position to start of literal */
+
+    unsigned char c = (unsigned char)yytext[1];
+    snprintf(numbuf, sizeof(numbuf), "%u", (unsigned)c);
+    yytext = numbuf;
+
+    return CHARCONST;
+}
 
  /* Other */
-{newline}       { scancol = 1; scanlineno++; }
+{newline}       { scanlineno++; scancol = 1; }
 {whitespace}    { updateCol(); }
 .               { updateCol(); yyerror = "Illegal token"; return ERROR; }
 
@@ -153,11 +225,6 @@ void countLines(){
             scanlineno++;
         }
     }
-}
-
-/* Michael will implement this function */
-int processString(){
-    return STRCONST;
 }
 
 int yywrap(){
