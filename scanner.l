@@ -2,6 +2,7 @@
 
 %x COMMENT
 %x STR
+%x STR_ERR
 
 %{
 #include <stdio.h>
@@ -104,9 +105,9 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
     yyerror  = "String spans multiple lines";
     yylineno = scanlineno;
     yycol    = scancol;
-    BEGIN(INITIAL);
     scanlineno++;
     scancol = 1;
+    BEGIN(STR_ERR);
     return ERROR;
 }
 
@@ -125,22 +126,8 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
     yylineno = scanlineno;
     yycol    = scancol;     /* at '\' */
     scancol += yyleng;      /* consume the bad escape */
-
-    /* recovery: skip the rest of the string */
-    while (1) {
-        int c = input();
-        if (c == EOF) { BEGIN(INITIAL); return ERROR; }
-
-        if (c == '\n') {
-            scanlineno++;
-            scancol = 1;
-            BEGIN(INITIAL);
-            return ERROR;
-        }
-
-        scancol++;
-        if (c == '"') { BEGIN(INITIAL); return ERROR; }
-    }
+    BEGIN(STR_ERR);
+    return ERROR;
 }
 
 <STR>[^\\\"\n]+ {
@@ -158,6 +145,11 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
     BEGIN(INITIAL);
     return ERROR;
 }
+
+<STR_ERR>\"       { scancol += yyleng; BEGIN(INITIAL); }
+<STR_ERR>\n       { scanlineno++; scancol = 1; }    /* stay in STR_ERR */
+<STR_ERR><<EOF>>  { BEGIN(INITIAL); }
+<STR_ERR>.        { scancol += yyleng; }
 
  /* Keywords */
 "if"      { updateCol(); return KWD_IF; }
