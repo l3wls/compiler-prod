@@ -1,5 +1,9 @@
 /* definitions */
 
+%option yytext_ptr
+%x COMMENT
+%x STR
+
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,22 +24,59 @@ void countLines();
  /* function to process a string literal */
 int processString();
 
+static int comment_start_line, comment_start_col;
+static int string_start_line, string_start_col;
+
+static char strbuf[4096];
+static int  stridx;
+
+static char numbuf[32];
+
+
 %}
 
 newline         \n
 whitespace      [ \t]+
 integer         [1-9][0-9]*|0
 integerlead0    0[0-9]+
-character       '.'
+character       \'[^\'\n]\'
 
 identifier      [a-zA-Z][a-zA-Z0-9]*
 illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
 
-yylineno = 1;
-
 %%
 
  /* rules */
+
+ "/*" {
+    comment_start_line = scanlineno;
+    comment_start_col  = scancol;
+    scancol += yyleng;      /* consume "/*" */
+    BEGIN(COMMENT);
+}
+
+<COMMENT>"*/" {
+    scancol += yyleng;      /* consume "*/" */
+    BEGIN(INITIAL);
+}
+
+<COMMENT>\n {
+    scanlineno++;
+    scancol = 1;
+}
+
+<COMMENT>. {
+    scancol += yyleng;
+}
+
+<COMMENT><<EOF>> {
+    yyerror  = "Unterminated comment";
+    yylineno = comment_start_line;
+    yycol    = comment_start_col;
+    BEGIN(INITIAL);
+    return ERROR;
+}
+
 
  /* Keywords */
 "if"      { updateCol(); return KWD_IF; }
