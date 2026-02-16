@@ -79,7 +79,7 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
 
  /* String Handling*/
 
- \" {
+\" {
     string_start_line = scanlineno;
     string_start_col  = scancol;
     stridx = 0;
@@ -105,6 +105,8 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
     yylineno = scanlineno;
     yycol    = scancol;
     BEGIN(INITIAL);
+    scanlineno++;
+    scancol = 1;
     return ERROR;
 }
 
@@ -121,9 +123,24 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
 <STR>\\. {
     yyerror  = "Unrecognized escape character in String";
     yylineno = scanlineno;
-    yycol    = scancol;     /* points at '\' */
-    BEGIN(INITIAL);
-    return ERROR;
+    yycol    = scancol;     /* at '\' */
+    scancol += yyleng;      /* consume the bad escape */
+
+    /* recovery: skip the rest of the string */
+    while (1) {
+        int c = input();
+        if (c == EOF) { BEGIN(INITIAL); return ERROR; }
+
+        if (c == '\n') {
+            scanlineno++;
+            scancol = 1;
+            BEGIN(INITIAL);
+            return ERROR;
+        }
+
+        scancol++;
+        if (c == '"') { BEGIN(INITIAL); return ERROR; }
+    }
 }
 
 <STR>[^\\\"\n]+ {
