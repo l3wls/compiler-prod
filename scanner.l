@@ -21,9 +21,6 @@ char *yyerror;
 void updateCol();
 void countLines();
 
- /* function to process a string literal */
-int processString();
-
 static int comment_start_line, comment_start_col;
 static int string_start_line, string_start_col;
 
@@ -84,19 +81,18 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
     string_start_line = scanlineno;
     string_start_col  = scancol;
     stridx = 0;
-    scancol += yyleng;      /* consume opening quote */
+    scancol += yyleng;
     BEGIN(STR);
 }
 
 <STR>\" {
-    /* closing quote: produce STRCONST with decoded content */
     strbuf[stridx] = '\0';
     yytext = strbuf;
 
     yylineno = string_start_line;
     yycol    = string_start_col;
 
-    scancol += yyleng;      /* consume closing quote */
+    scancol += yyleng;
     BEGIN(INITIAL);
     return STRCONST;
 }
@@ -124,8 +120,8 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
 <STR>\\. {
     yyerror  = "Unrecognized escape character in String";
     yylineno = scanlineno;
-    yycol    = scancol;     /* at '\' */
-    scancol += yyleng;      /* consume the bad escape */
+    yycol    = scancol;
+    scancol += yyleng;
     BEGIN(STR_ERR);
     return ERROR;
 }
@@ -147,7 +143,7 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
 }
 
 <STR_ERR>\"       { scancol += yyleng; BEGIN(INITIAL); }
-<STR_ERR>\n       { scanlineno++; scancol = 1; }    /* stay in STR_ERR */
+<STR_ERR>\n       { scanlineno++; scancol = 1; }
 <STR_ERR><<EOF>>  { BEGIN(INITIAL); }
 <STR_ERR>.        { scancol += yyleng; }
 
@@ -203,13 +199,13 @@ illidentifier   [0-9]+[a-zA-Z][a-zA-Z0-9]*
 {integer}       { updateCol(); return INTCONST; }
 {integerlead0}  { updateCol(); yyerror = "Illegal token"; return ERROR; }
 
- /* Bad character constants (treat whole thing as one illegal token) */
+ /* Bad character constants */
 \'\'                { updateCol(); yyerror = "Illegal token"; return ERROR; }
 \'[^\'\n]{2,}\'     { updateCol(); yyerror = "Illegal token"; return ERROR; }
 \'\\[^\'\n]\'       { updateCol(); yyerror = "Illegal token"; return ERROR; }
 
 {character} {
-    updateCol();  /* set token position to start of literal */
+    updateCol();
 
     unsigned char c = (unsigned char)yytext[1];
     snprintf(numbuf, sizeof(numbuf), "%u", (unsigned)c);
