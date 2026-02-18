@@ -19,7 +19,6 @@ char *yyerror;
 
  /* functions to update line and column numbers */
 void updateCol();
-void countLines();
 
 static int comment_start_line, comment_start_col;
 static int string_start_line, string_start_col;
@@ -227,15 +226,6 @@ void updateCol(){
     yycol = scancol;
     yylineno = scanlineno;
     scancol += yyleng;
-}
-
-void countLines(){
-    int i;
-    for(i = 0; i < yyleng; i++){
-        if(yytext[i] == '\n'){
-            scanlineno++;
-        }
-    }
 }
 
 int yywrap(){
