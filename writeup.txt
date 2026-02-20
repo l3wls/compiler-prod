@@ -1,0 +1,174 @@
+WRITEUP FOR mC SCANNER PROJECT
+================================
+
+1. STUDENT INFORMATION
+   Name: Lewis Figueroa
+   Course ID: CS 4318
+   NetID: nlw71
+   
+   Partner Name: [Michael's Full Name]
+   Partner NetID: [Michael's NetID]
+
+2. CONTRIBUTION BREAKDOWN
+
+   nlw71 - Lewis Figueroa:
+   ---------------------------------
+   I was responsible for implementing the foundational scanner infrastructure
+   and basic token recognition:
+   
+   • Global Variables: Set up position tracking variables (scancol, yycol, 
+     scanlineno, yyerror) to maintain accurate line and column information
+     for all tokens and errors.
+   
+   • Pattern Definitions: Created regex patterns for:
+     - newline, whitespace (spaces and tabs)
+     - integer (valid: no leading zeros except 0)
+     - integerlead0 (invalid: integers with leading zeros like 007)
+     - character (single character in single quotes)
+     - identifier (must start with letter)
+     - illidentifier (starts with digit - error case)
+   
+   • Keyword Recognition: Implemented all 8 keyword rules:
+     if, else, while, int, string, char, return, void
+   
+   • Operator Recognition: Implemented all 18 operator rules with proper ordering:
+     - Multi-character operators first: ++, --, &&, ||, <=, >=, ==, !=
+     - Single-character operators: +, -, *, /, %, <, >, =, !, @
+     - Ensured correct tokenization by placing longer patterns before shorter ones
+   
+   • Punctuation and Brackets: Implemented rules for:
+     [ ] { } ( ) , ;
+   
+   • Helper Functions:
+     - updateCol(): Saves token start position (yycol, yylineno) and advances
+       scanner position (scancol) by token length. This ensures accurate 
+       position reporting for all tokens.
+     - countLines(): Counts newline characters in multiline tokens (used by
+       comments and strings) to maintain correct line numbering.
+     - yywrap(): Returns 1 to indicate end of input to flex.
+   
+   • Build System: Updated makefile to detect operating system (macOS vs Linux)
+     and use appropriate flex library flag (-ll for macOS, -lfl for Linux).
+   
+   Michael's NetID - Michael's Name:
+   -------------------------------------------------
+   My partner was responsible for the advanced string and comment handling:
+   
+   • Comment Handling: Implemented state machine approach using start conditions:
+     - COMMENT state to handle multiline comments
+     - Saved comment start position for accurate error reporting
+     - Detected unterminated comments at EOF
+   
+   • String Handling: Implemented sophisticated three-state string processing:
+     - STR state: Normal string scanning with escape sequence processing
+     - STR_ERR state: Error recovery to skip to closing quote
+     - Built string content character-by-character in buffer (strbuf)
+     - Real-time escape sequence decoding (\n → newline, \t → tab, etc.)
+   
+   • Enhanced Character Validation: Added detection for:
+     - Empty character constants ''
+     - Multi-character constants 'ab'
+     - Escape sequences in characters '\n'
+     - Conversion of characters to ASCII values for output
+   
+   • Comprehensive Testing: Created test.txt covering all token types and
+     error conditions including edge cases not in provided test cases.
+
+3. TEST CASES (DIFFERENT FROM PROVIDED EXAMPLES)
+
+   Test Case A: Multi-Character Operator Precedence
+   -------------------------------------------------
+   Input:
+   x+++++y
+   a&&||b
+   
+   Expected Output:
+   <ID, x> : (1:1)
+   <OPERATOR, ++> : (1:2)
+   <OPERATOR, ++> : (1:4)
+   <OPERATOR, +> : (1:6)
+   <ID, y> : (1:7)
+   <ID, a> : (2:1)
+   <OPERATOR, &&> : (2:2)
+   <OPERATOR, ||> : (2:4)
+   <ID, b> : (2:6)
+   
+   Rationale: 
+   This tests that the scanner correctly implements longest-match for operators.
+   "x+++++" should be tokenized as ++ ++ + (not as + + + + +), demonstrating
+   that multi-character operators are recognized before single-character ones.
+   This validates our design decision to order longer operators first in the
+   scanner rules.
+
+   Test Case B: Error Position Accuracy in Strings
+   ------------------------------------------------
+   Input:
+   int x = 5;
+   string s = "valid\ttab then \x bad";
+   int y = 10;
+   
+   Expected Output:
+   <KEYWORD, int> : (1:1)
+   <ID, x> : (1:5)
+   <OPERATOR, => : (1:7)
+   <INTEGER, 5> : (1:9)
+   <PUNCTUATION, ;> : (1:10)
+   <KEYWORD, string> : (2:1)
+   <ID, s> : (2:8)
+   <OPERATOR, => : (2:10)
+   <ERROR, Unrecognized escape character in String> : (2:29)
+   <KEYWORD, int> : (3:1)
+   <ID, y> : (3:5)
+   <OPERATOR, => : (3:7)
+   <INTEGER, 10> : (3:9)
+   <PUNCTUATION, ;> : (3:11)
+   
+   Rationale:
+   This tests two critical features: (1) that valid escape sequences (\t) are
+   accepted while invalid ones (\x) generate errors, and (2) that the error
+   position (2:29) points precisely to the backslash of the invalid escape
+   sequence. Additionally, this demonstrates error recovery - scanning continues
+   after the string error and correctly recognizes subsequent tokens on line 3.
+
+4. COMPILATION INSTRUCTIONS
+
+   Standard compilation using provided makefile:
+   
+   make clean
+   make
+   
+   The makefile will:
+   1. Run flex on scanner.l to generate lex.yy.c
+   2. Compile lex.yy.c to lex.yy.o
+   3. Compile driver.c to driver.o  
+   4. Link object files with flex library to create 'scanner' executable
+   
+   The makefile automatically detects the operating system and uses:
+   - -ll flag on macOS (links with libl)
+   - -lfl flag on Linux (links with libfl)
+   
+   To run the scanner:
+   ./scanner < input_file.txt
+   or
+   ./scanner input_file.txt
+   
+   No special compilation instructions needed. The provided makefile handles
+   all platform differences automatically.
+
+ADDITIONAL NOTES
+================
+
+Files Included:
+- scanner.l     (Lexical analyzer specification)
+- driver.c      (Main program for testing)
+- tokendef.h    (Token type definitions)
+- Makefile      (Build automation)
+- writeup.txt   (This file)
+- testA.txt     (Provided test case 0)
+- test1B.txt     (Provided test case 1)
+
+Test Results:
+- All provided test cases produce correct output
+- All token types recognized correctly
+- All error types detected with accurate position reporting
+- Cross-platform compatibility verified
