@@ -1,0 +1,4 @@
+int x = 5;
+string s = "valid\ttab then \x bad";
+int y = 10;
+char c = 007;
