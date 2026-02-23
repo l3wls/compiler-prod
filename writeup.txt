@@ -6,14 +6,14 @@ WRITEUP FOR mC SCANNER PROJECT
    Course ID: CS 4318
    NetID: nlw71
    
-   Partner Name: [Michael's Full Name]
-   Partner NetID: [Michael's NetID]
+   Partner Name: Michael Walton
+   Partner NetID: rog41
 
 2. CONTRIBUTION BREAKDOWN
 
    nlw71 - Lewis Figueroa:
    ---------------------------------
-   I was responsible for implementing the foundational scanner infrastructure
+   Responsible for implementing the foundational scanner infrastructure
    and basic token recognition:
    
    • Global Variables: Set up position tracking variables (scancol, yycol, 
@@ -50,16 +50,16 @@ WRITEUP FOR mC SCANNER PROJECT
    • Build System: Updated makefile to detect operating system (macOS vs Linux)
      and use appropriate flex library flag (-ll for macOS, -lfl for Linux).
    
-   Michael's NetID - Michael's Name:
+   rog41 - Michael Walton:
    -------------------------------------------------
-   My partner was responsible for the advanced string and comment handling:
+   Responsible for the string and comment handling:
    
    • Comment Handling: Implemented state machine approach using start conditions:
      - COMMENT state to handle multiline comments
      - Saved comment start position for accurate error reporting
      - Detected unterminated comments at EOF
    
-   • String Handling: Implemented sophisticated three-state string processing:
+   • String Handling: Implemented three-state string processing:
      - STR state: Normal string scanning with escape sequence processing
      - STR_ERR state: Error recovery to skip to closing quote
      - Built string content character-by-character in buffer (strbuf)
